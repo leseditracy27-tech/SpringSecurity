@@ -1,42 +1,56 @@
 package com.example.crudapp.controller;
 
-import com.example.crudapp.model.Users;
+import com.example.crudapp.model.User;
 import com.example.crudapp.service.UserService;
-import org.springframework.web.bind.annotation.*;
-import java.util.List;
 
-@RestController
-@RequestMapping("/users")  // base URL for all endpoints
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
+
+import jakarta.validation.Valid;
+
+@Controller
+@RequestMapping("/users")
 public class UserController {
 
-    private final UserService userService;
+    @Autowired
+    private UserService userService;
 
-    // Constructor injection: Spring Boot provides UserService
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
-
-    // GET /users → get all users
     @GetMapping
-    public List<Users> getAllUsers() {
-        return userService.getAllUsers();
+    public String listUsers(Model model){
+        model.addAttribute("users", userService.getAllUsers());
+        return "users";
     }
 
-    // GET /users/{id} → get user by ID
-    @GetMapping("/{id}")
-    public Users getUserById(@PathVariable Long id) {
-        return userService.getUserById(id);
+    @GetMapping("/new")
+    public String createUserForm(Model model){
+        model.addAttribute("user", new User());
+        return "form";
     }
 
-    // POST /users → create a new user
     @PostMapping
-    public Users createUser(@RequestBody Users user) {
-        return userService.saveUser(user);
+    public String saveUser(@Valid @ModelAttribute("user") User user,
+                           BindingResult result){
+
+        if(result.hasErrors()){
+            return "form";
+        }
+
+        userService.saveUser(user);
+        return "redirect:/users";
     }
 
-    // DELETE /users/{id} → delete a user
-    @DeleteMapping("/{id}")
-    public void deleteUser(@PathVariable Long id) {
+    @GetMapping("/edit/{id}")
+    public String editUserForm(@PathVariable Long id, Model model){
+        model.addAttribute("user", userService.getUserById(id));
+        return "edit";
+    }
+
+    @GetMapping("/delete/{id}")
+    public String deleteUser(@PathVariable Long id){
         userService.deleteUser(id);
+        return "redirect:/users";
     }
 }
