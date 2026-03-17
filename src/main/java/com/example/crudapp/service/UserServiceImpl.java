@@ -1,42 +1,38 @@
 package com.example.crudapp.service;
 
-import com.example.crudapp.dao.UserDao;
 import com.example.crudapp.model.User;
+import com.example.crudapp.repository.UserRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 public class UserServiceImpl implements UserService {
 
-    private final UserDao userDao;
+    private final UserRepository repository;
 
-    public UserServiceImpl(UserDao userDao) {
-        this.userDao = userDao;
+    public UserServiceImpl(UserRepository repository) {
+        this.repository = repository;
     }
 
     @Override
-    @Transactional
     public List<User> getAllUsers() {
-        return userDao.findAll();
+        return repository.findAll();
     }
 
     @Override
-    @Transactional
     public User getUserById(Long id) {
-        return userDao.findId(id);
+        return repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
     }
 
     @Override
-    @Transactional
     public void saveUser(User user) {
-        userDao.save(user);
+        repository.save(user); // CREATE + UPDATE
     }
 
     @Override
-    @Transactional
     public void deleteUser(Long id) {
-        userDao.delete(id);
+        repository.deleteById(id);
     }
 }

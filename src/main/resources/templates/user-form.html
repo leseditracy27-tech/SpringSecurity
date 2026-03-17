@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>User Form</title>
+</head>
+<body>
+
+<h2 th:text="${user.id} != null ? 'Edit User' : 'Add User'"></h2>
+
+<form th:action="@{/admin/save}" th:object="${user}" method="post">
+
+    <input type="hidden" th:field="*{id}"/>
+
+    <label>First Name:</label>
+    <input type="text" th:field="*{firstName}"/>
+    <div th:if="${#fields.hasErrors('firstName')}" th:errors="*{firstName}"></div>
+
+    <br><br>
+
+    <label>Last Name:</label>
+    <input type="text" th:field="*{lastName}"/>
+    <div th:if="${#fields.hasErrors('lastName')}" th:errors="*{lastName}"></div>
+
+    <br><br>
+
+    <label>Email:</label>
+    <input type="email" th:field="*{email}"/>
+    <div th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+
+    <br><br>
+
+    <label>Age:</label>
+    <input type="number" th:field="*{age}"/>
+    <div th:if="${#fields.hasErrors('age')}" th:errors="*{age}"></div>
+
+    <br><br>
+
+    <button type="submit" th:text="${user.id} != null ? 'Update' : 'Save'"></button>
+</form>
+
+<br>
+<a th:href="@{/admin}">Back to Users List</a>
+
+</body>
+</html>

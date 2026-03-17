@@ -2,55 +2,52 @@ package com.example.crudapp.controller;
 
 import com.example.crudapp.model.User;
 import com.example.crudapp.service.UserService;
-
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.validation.Valid;
-
 @Controller
-@RequestMapping("/users")
+@RequestMapping("/admin")
 public class UserController {
 
-    @Autowired
-    private UserService userService;
+    private final UserService service;
 
+    public UserController(UserService service) {
+        this.service = service;
+    }
+
+    // List all users
     @GetMapping
-    public String listUsers(Model model){
-        model.addAttribute("users", userService.getAllUsers());
+    public String listUsers(Model model) {
+        model.addAttribute("users", service.getAllUsers());
         return "users";
     }
 
-    @GetMapping("/new")
-    public String createUserForm(Model model){
-        model.addAttribute("user", new User());
-        return "form";
+    // Show form (Add or Edit)
+    @GetMapping({"/form", "/form/{id}"})
+    public String showForm(@PathVariable(required = false) Long id, Model model) {
+        User user = (id != null) ? service.getUserById(id) : new User();
+        model.addAttribute("user", user);
+        return "user-form";  // only one HTML form for both Add & Edit
     }
 
-    @PostMapping
+    // Save or update user
+    @PostMapping("/save")
     public String saveUser(@Valid @ModelAttribute("user") User user,
-                           BindingResult result){
-
-        if(result.hasErrors()){
-            return "form";
+                           BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            return "user-form";  // if errors, stay on same form
         }
-
-        userService.saveUser(user);
-        return "redirect:/users";
+        service.saveUser(user);
+        return "redirect:/admin";
     }
 
-    @GetMapping("/edit/{id}")
-    public String editUserForm(@PathVariable Long id, Model model){
-        model.addAttribute("user", userService.getUserById(id));
-        return "edit";
-    }
-
-    @GetMapping("/delete/{id}")
-    public String deleteUser(@PathVariable Long id){
-        userService.deleteUser(id);
-        return "redirect:/users";
+    // Delete user
+    @PostMapping("/delete/{id}")
+    public String deleteUser(@PathVariable Long id) {
+        service.deleteUser(id);
+        return "redirect:/admin";
     }
 }
