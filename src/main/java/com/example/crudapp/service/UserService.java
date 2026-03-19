@@ -7,7 +7,9 @@ public interface UserService {
 
     List<User> getAllUsers();
 
-    void saveUser(User user);
+    List<User> findAll();
+
+    void save (User user);
 
     User getUserById(Long id);
 

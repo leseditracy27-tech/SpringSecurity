@@ -9,30 +9,39 @@ import java.util.List;
 @Service
 public class UserServiceImpl implements UserService {
 
-    private final UserRepository repository;
+    private final UserRepository userRepository;
 
-    public UserServiceImpl(UserRepository repository) {
-        this.repository = repository;
+    // ✅ Constructor Injection
+    public UserServiceImpl(UserRepository userRepository) {
+        this.userRepository = userRepository;
     }
 
+    // ✅ Get all users
     @Override
     public List<User> getAllUsers() {
-        return repository.findAll();
+        return userRepository.findAll();
     }
 
+    @Override
+    public List<User> findAll() {
+        return List.of();
+    }
+
+    // ✅ Save or update user
+    @Override
+    public void save(User user) {
+        userRepository.save(user);
+    }
+
+    // ✅ Get user by ID
     @Override
     public User getUserById(Long id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+        return userRepository.findById(id).orElse(null);
     }
 
-    @Override
-    public void saveUser(User user) {
-        repository.save(user); // CREATE + UPDATE
-    }
-
+    // ✅ Delete user
     @Override
     public void deleteUser(Long id) {
-        repository.deleteById(id);
+        userRepository.deleteById(id);
     }
 }
