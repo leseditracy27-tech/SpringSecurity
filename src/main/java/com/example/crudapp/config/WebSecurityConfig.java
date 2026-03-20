@@ -13,9 +13,12 @@ import org.springframework.security.web.SecurityFilterChain;
 public class WebSecurityConfig {
 
     private final UserDetailsServiceImpl userDetailsService;
+    private final LoginSuccessHandler loginSuccessHandler; // connect the handler
 
-    public WebSecurityConfig(UserDetailsServiceImpl userDetailsService) {
+    public WebSecurityConfig(UserDetailsServiceImpl userDetailsService,
+                             LoginSuccessHandler loginSuccessHandler) {
         this.userDetailsService = userDetailsService;
+        this.loginSuccessHandler = loginSuccessHandler;
     }
 
     // 🔐 Password encoder
@@ -54,9 +57,9 @@ public class WebSecurityConfig {
 
                 // 🔐 LOGIN
                 .formLogin(form -> form
-                        .loginPage("/login")
-                        .usernameParameter("email") // login with email
-                        .defaultSuccessUrl("/admin", true) // you can change later
+                        .loginPage("/login")               // custom login page
+                        .usernameParameter("email")        // login with email
+                        .successHandler(loginSuccessHandler) // <-- role-based redirect
                         .permitAll()
                 )
 

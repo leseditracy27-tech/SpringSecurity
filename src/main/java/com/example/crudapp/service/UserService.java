@@ -7,9 +7,7 @@ public interface UserService {
 
     List<User> getAllUsers();
 
-    List<User> findAll();
-
-    void save (User user);
+    void saveUser(User user);   // ✅ MUST match implementation
 
     User getUserById(Long id);
 

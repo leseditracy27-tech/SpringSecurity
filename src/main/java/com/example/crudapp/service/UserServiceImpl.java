@@ -2,6 +2,7 @@ package com.example.crudapp.service;
 
 import com.example.crudapp.model.User;
 import com.example.crudapp.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -10,36 +11,32 @@ import java.util.List;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    // ✅ Constructor Injection
-    public UserServiceImpl(UserRepository userRepository) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
-    // ✅ Get all users
     @Override
     public List<User> getAllUsers() {
-        return userRepository.findAll();
+        return userRepository.findAll(); // fetch all users from DB
     }
 
     @Override
-    public List<User> findAll() {
-        return List.of();
-    }
-
-    // ✅ Save or update user
-    @Override
-    public void save(User user) {
+    public void saveUser(User user) {
+        // Encode password before saving
+        if (user.getPassword() != null && !user.getPassword().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+        }
         userRepository.save(user);
     }
 
-    // ✅ Get user by ID
     @Override
     public User getUserById(Long id) {
         return userRepository.findById(id).orElse(null);
     }
 
-    // ✅ Delete user
     @Override
     public void deleteUser(Long id) {
         userRepository.deleteById(id);
