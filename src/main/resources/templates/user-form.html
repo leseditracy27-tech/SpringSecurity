@@ -1,5 +1,8 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>User Form</title>
+</head>
 <body>
 
 <h2 th:text="${user.id} != null ? 'Edit User' : 'Add User'"></h2>
@@ -18,39 +21,43 @@
 
     <input type="hidden" th:field="*{id}"/>
 
-    <label>First Name:</label>
-    <input type="text" th:field="*{firstName}"/>
+    <!-- ✅ First Name -->
+    <label for="firstName">First Name:</label>
+    <input id="firstName" type="text" th:field="*{firstName}"/>
 
     <br><br>
 
-    <label>Last Name:</label>
-    <input type="text" th:field="*{lastName}"/>
+    <!-- ✅ Last Name -->
+    <label for="lastName">Last Name:</label>
+    <input id="lastName" type="text" th:field="*{lastName}"/>
 
     <br><br>
 
-    <label>Email:</label>
-    <input type="email" th:field="*{email}"/>
+    <!-- ✅ Email -->
+    <label for="email">Email:</label>
+    <input id="email" type="email" th:field="*{email}"/>
 
     <br><br>
 
-    <label>Age:</label>
-    <input type="number" th:field="*{age}"/>
+    <!-- ✅ Age -->
+    <label for="age">Age:</label>
+    <input id="age" type="number" th:field="*{age}"/>
 
     <br><br>
 
     <!-- 🔐 Password -->
-    <label>Password:</label>
-    <input type="password" th:field="*{password}"/>
+    <label for="password">Password:</label>
+    <input id="password" type="password" th:field="*{password}"/>
 
     <br><br>
 
-    <!-- 🔐 Roles (FIXED) -->
-    <label>Roles:</label>
-    <select name="roleIds" multiple>
+    <!-- 🔐 Roles -->
+    <label for="roles">Roles:</label>
+    <select id="roles" name="roleIds" multiple>
         <option th:each="role : ${allRoles}"
                 th:value="${role.id}"
                 th:text="${role.name}"
-                th:selected="${user.roles != null and user.roles.contains(role)}">
+                th:selected="${#lists.contains(user.roles, role)}">
         </option>
     </select>
 

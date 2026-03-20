@@ -120,7 +120,5 @@ public class User implements UserDetails {
         return true;
     }
 
-    public UserDetails orElseThrow(Object userNotFound) {
-        return null;
-    }
+
 }
