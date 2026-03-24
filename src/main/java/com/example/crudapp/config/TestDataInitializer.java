@@ -42,7 +42,7 @@ public class TestDataInitializer {
                     });
 
             // ✅ Create ADMIN user
-            if (userRepository.findByEmail("admin@mail.com") == null) {
+            if (userRepository.findByEmail("admin@mail.com").isEmpty()) {
                 User admin = new User();
                 admin.setFirstName("Admin");
                 admin.setLastName("User");
@@ -55,7 +55,7 @@ public class TestDataInitializer {
             }
 
             // ✅ Create NORMAL USER
-            if (userRepository.findByEmail("user@mail.com") == null) {
+            if (userRepository.findByEmail("user@mail.com").isEmpty()) {
                 User user = new User();
                 user.setFirstName("Normal");
                 user.setLastName("User");

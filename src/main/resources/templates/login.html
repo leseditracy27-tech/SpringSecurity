@@ -10,10 +10,14 @@
     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
     Email:
-    <input type="text" name="email"/>
+    <label>
+        <input type="text" name="email"/>
+    </label>
 
     Password:
-    <input type="password" name="password"/>
+    <label>
+        <input type="password" name="password"/>
+    </label>
 
     <button type="submit">Login</button>
 </form>

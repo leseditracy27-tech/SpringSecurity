@@ -28,7 +28,7 @@ public class AdminController {
     public String listUsers(Model model) {
         List<User> users = userService.getAllUsers();
         model.addAttribute("users", users);
-        return "admin/users"; // Thymeleaf template
+        return "users"; // Thymeleaf template
     }
 
     // Show add/edit form
@@ -41,7 +41,7 @@ public class AdminController {
         List<Role> roles = roleRepository.findAll();
         model.addAttribute("allRoles", roles);
 
-        return "admin/user-form";
+        return "user-form";
     }
 
     // Save user

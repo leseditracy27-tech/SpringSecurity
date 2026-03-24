@@ -1,6 +1,7 @@
 package com.example.crudapp.model;
 
 import jakarta.persistence.*;
+import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 
 import java.util.Objects;
@@ -13,6 +14,7 @@ public class Role implements GrantedAuthority {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Setter
     private String name; // ROLE_ADMIN or ROLE_USER
 
     public Role() {}
@@ -34,10 +36,6 @@ public class Role implements GrantedAuthority {
 
     public String getName() {
         return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
 
