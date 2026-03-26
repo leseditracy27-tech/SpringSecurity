@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/admin")
@@ -23,37 +24,44 @@ public class AdminController {
         this.roleRepository = roleRepository;
     }
 
-    // List all users
+    // ✅ List all users
     @GetMapping
     public String listUsers(Model model) {
-        List<User> users = userService.getAllUsers();
-        model.addAttribute("users", users);
-        return "users"; // Thymeleaf template
+        model.addAttribute("users", userService.getAllUsers());
+        return "listUsers"; // ✅ IMPORTANT (match folder)
     }
 
-    // Show add/edit form
+    // ✅ Show add/edit form
     @GetMapping("/form")
     public String userForm(@RequestParam(value = "id", required = false) Long id, Model model) {
-        User user = (id != null) ? userService.getUserById(id) : new User();
+
+        User user = (id != null)
+                ? userService.getUserById(id)
+                : new User();
+
         model.addAttribute("user", user);
+        model.addAttribute("allRoles", roleRepository.findAll());
 
-        // send all roles to the form
-        List<Role> roles = roleRepository.findAll();
-        model.addAttribute("allRoles", roles);
-
-        return "user-form";
+        return "user-form"; // ✅ IMPORTANT (match folder)
     }
 
-    // Save user
+    // ✅ Save user
     @PostMapping("/save")
-    public String saveUser(@ModelAttribute User user, @RequestParam("roleIds") Set<Long> roleIds) {
-        Set<Role> roles = roleRepository.findAllById(roleIds).stream().collect(java.util.stream.Collectors.toSet());
-        user.setRoles(roles);
+    public String saveUser(@ModelAttribute User user,
+                           @RequestParam(value = "roleIds", required = false) Set<Long> roleIds) {
+
+        if (roleIds != null) {
+            Set<Role> roles = roleRepository.findAllById(roleIds)
+                    .stream()
+                    .collect(Collectors.toSet());
+            user.setRoles(roles);
+        }
+
         userService.saveUser(user);
         return "redirect:/admin";
     }
 
-    // Delete user
+    // ✅ Delete user
     @PostMapping("/delete/{id}")
     public String deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);

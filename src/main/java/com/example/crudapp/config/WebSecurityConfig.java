@@ -37,30 +37,32 @@ public class WebSecurityConfig {
         return authProvider;
     }
 
-    // 🔐 Security configuration
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-                .authorizeHttpRequests(auth -> auth
-                        // PUBLIC
-                        .requestMatchers("/login", "/css/**").permitAll()
+                .authenticationProvider(authProvider())
 
-                        // ADMIN ONLY
+                .authorizeHttpRequests(auth -> auth
+                        // ✅ PUBLIC
+                        .requestMatchers("/login", "/register", "/css/**").permitAll()
+
+                        // ✅ ADMIN ONLY
                         .requestMatchers("/admin/**").hasRole("ADMIN")
 
-                        // USER + ADMIN
-                        .requestMatchers("/user/**").hasAnyRole("USER", "ADMIN")
+                        // ✅ USER + ADMIN
+                        .requestMatchers("/user/**", "/users").hasAnyRole("USER", "ADMIN")
 
-                        // everything else
+                        // ✅ everything else
                         .anyRequest().authenticated()
                 )
 
                 // 🔐 LOGIN
                 .formLogin(form -> form
-                        .loginPage("/login")               // custom login page
-                        .usernameParameter("email")        // login with email
-                        .successHandler(loginSuccessHandler) // <-- role-based redirect
+                        .loginPage("/login")
+                        .usernameParameter("email")
+                        .successHandler(loginSuccessHandler)
+                        .failureUrl("/login?error=true") // 🔥 ADD THIS
                         .permitAll()
                 )
 

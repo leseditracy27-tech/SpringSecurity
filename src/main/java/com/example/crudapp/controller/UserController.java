@@ -5,13 +5,18 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
+@RequestMapping("/user")
 public class UserController {
 
-    @GetMapping("/user")
-    public String userHome(@AuthenticationPrincipal User currentUser, Model model) {
-        model.addAttribute("user", currentUser);
-        return "users"; // user.html
+    @GetMapping
+    public String userHome(Model model,
+                           @AuthenticationPrincipal User user) {
+
+        model.addAttribute("user", user);
+
+        return "user/home"; // make sure this file exists
     }
 }

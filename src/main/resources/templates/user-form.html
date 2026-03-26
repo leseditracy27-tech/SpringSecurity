@@ -1,70 +1,88 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>User Form</title>
+    <meta charset="UTF-8">
+    <title th:text="${user.id} != null ? 'Edit User' : 'Add User'">User Form</title>
+    <style>
+        label {
+            display: inline-block;
+            width: 100px;
+            margin-bottom: 10px;
+        }
+
+        input, select {
+            padding: 5px;
+            width: 200px;
+        }
+
+        button {
+            padding: 5px 15px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+        }
+    </style>
 </head>
 <body>
 
 <h2 th:text="${user.id} != null ? 'Edit User' : 'Add User'"></h2>
 
 <!-- 🔐 Logout -->
-<form th:action="@{/logout}" method="post">
+<form th:action="@{/logout}" method="post" style="display:inline;">
     <button type="submit">Logout</button>
 </form>
 
-<br>
+<br><br>
 
 <form th:action="@{/admin/save}" th:object="${user}" method="post">
 
     <!-- CSRF -->
     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
+    <!-- Hidden ID for edit -->
     <input type="hidden" th:field="*{id}"/>
 
-    <!-- ✅ First Name -->
+    <!-- First Name -->
     <label for="firstName">First Name:</label>
-    <input id="firstName" type="text" th:field="*{firstName}"/>
+    <input id="firstName" type="text" th:field="*{firstName}" required/>
+    <br>
 
-    <br><br>
-
-    <!-- ✅ Last Name -->
+    <!-- Last Name -->
     <label for="lastName">Last Name:</label>
-    <input id="lastName" type="text" th:field="*{lastName}"/>
+    <input id="lastName" type="text" th:field="*{lastName}" required/>
+    <br>
 
-    <br><br>
-
-    <!-- ✅ Email -->
+    <!-- Email -->
     <label for="email">Email:</label>
-    <input id="email" type="email" th:field="*{email}"/>
+    <input id="email" type="email" th:field="*{email}" required/>
+    <br>
 
-    <br><br>
-
-    <!-- ✅ Age -->
+    <!-- Age -->
     <label for="age">Age:</label>
-    <input id="age" type="number" th:field="*{age}"/>
+    <input id="age" type="number" th:field="*{age}" min="0"/>
+    <br>
 
-    <br><br>
-
-    <!-- 🔐 Password -->
+    <!-- Password -->
     <label for="password">Password:</label>
-    <input id="password" type="password" th:field="*{password}"/>
+    <input id="password" type="password" th:field="*{password}"
+           th:placeholder="${user.id != null} ? 'Leave blank to keep' : ''"/>    <br>
 
-    <br><br>
-
-    <!-- 🔐 Roles -->
+    <!-- Roles -->
     <label for="roles">Roles:</label>
-    <select id="roles" name="roleIds" multiple>
+    <select id="roles" name="roleIds" multiple size="3">
         <option th:each="role : ${allRoles}"
                 th:value="${role.id}"
                 th:text="${role.name}"
-                th:selected="${#lists.contains(user.roles, role)}">
+                th:selected="${user.roles != null} ? ${user.roles.contains(role)} : false">
         </option>
     </select>
-
     <br><br>
 
-    <button type="submit"
-            th:text="${user.id} != null ? 'Update' : 'Save'"></button>
+    <!-- Submit button -->
+    <button type="submit" th:text="${user.id} != null ? 'Update' : 'Save'"></button>
 
 </form>
 

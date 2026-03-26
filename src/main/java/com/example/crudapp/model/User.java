@@ -11,48 +11,42 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+@Getter
 @Setter
 @Entity
 @Table(name = "users")
 public class User implements UserDetails {
 
-    @Getter
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Getter
     @Column(name="first_name")
     @NotEmpty(message = "First name cannot be empty")
     @Pattern(regexp = "^[A-Za-z]+$", message = "First name must not contain digits")
     private String firstName;
 
-    @Getter
     @Column(name="last_name")
     @NotEmpty(message = "Last name cannot be empty")
     @Pattern(regexp = "^[A-Za-z]+$", message = "Last name must not contain digits")
     private String lastName;
 
-    @Getter
     @Column(name="email", unique = true)
     @NotEmpty(message = "Email cannot be empty")
     @Email(message = "Enter a valid email")
     private String email;
 
-    @Getter
     @Column(name="age")
     @NotNull(message = "Age is required")
     @Min(value = 1, message = "Age must be between 1 and 120")
     @Max(value = 120, message = "Age must be between 1 and 120")
     private Integer age;
 
-    // 🔐 Password for login
+    // 🔐 PASSWORD (FIXED)
     @Column(name = "password")
-    @NotEmpty(message = "Password cannot be empty")
     private String password;
 
-    // 🔐 Roles (ADMIN / USER)
-    @Getter
+    // 🔐 ROLES
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "users_roles",
@@ -71,23 +65,16 @@ public class User implements UserDetails {
         this.password = password;
     }
 
-    // ===== Getters & Setters =====
-
-    // ===== Spring Security Methods =====
+    // ===== SPRING SECURITY =====
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return roles;
-    }
-
-    @Override
-    public String getPassword() {
-        return password;
+        return roles; // roles already implement GrantedAuthority
     }
 
     @Override
     public String getUsername() {
-        return email; // login with email
+        return email; // login uses email
     }
 
     @Override
@@ -109,6 +96,4 @@ public class User implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
-
-
 }
