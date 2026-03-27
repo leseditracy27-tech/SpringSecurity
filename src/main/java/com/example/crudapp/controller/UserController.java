@@ -17,6 +17,6 @@ public class UserController {
 
         model.addAttribute("user", user);
 
-        return "user/home"; // make sure this file exists
+        return "users"; // make sure this file exists
     }
 }

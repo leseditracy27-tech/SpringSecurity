@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
+<div style="display:flex; justify-content: space-between; align-items: center;">
+    <h2>Users</h2>
+
+    <form th:action="@{/logout}" method="post">
+        <button type="submit">Logout</button>
+    </form>
+</div>
 
 <h2>Welcome!</h2>
 

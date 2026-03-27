@@ -22,17 +22,17 @@ public class User implements UserDetails {
     private Long id;
 
     @Column(name="first_name")
-    @NotEmpty(message = "First name cannot be empty")
-    @Pattern(regexp = "^[A-Za-z]+$", message = "First name must not contain digits")
+    @NotBlank(message = "First name is required")
+    @Pattern(regexp = "^[A-Za-z]+$", message = "First name must contain only letters")
     private String firstName;
 
     @Column(name="last_name")
-    @NotEmpty(message = "Last name cannot be empty")
-    @Pattern(regexp = "^[A-Za-z]+$", message = "Last name must not contain digits")
+    @NotBlank(message = "Last name is required")
+    @Pattern(regexp = "^[A-Za-z]+$", message = "Last name must contain only letters")
     private String lastName;
 
     @Column(name="email", unique = true)
-    @NotEmpty(message = "Email cannot be empty")
+    @NotBlank(message = "Email is required")
     @Email(message = "Enter a valid email")
     private String email;
 
@@ -44,6 +44,7 @@ public class User implements UserDetails {
 
     // 🔐 PASSWORD (FIXED)
     @Column(name = "password")
+    @Size(min = 4, message = "Password must be at least 4 characters")
     private String password;
 
     // 🔐 ROLES
