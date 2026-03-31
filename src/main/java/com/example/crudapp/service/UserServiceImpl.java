@@ -20,21 +20,46 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<User> getAllUsers() {
-        return userRepository.findAll(); // fetch all users from DB
+        return userRepository.findAll();
     }
 
     @Override
     public void saveUser(User user) {
-        // Encode password before saving
-        if (user.getPassword() != null && !user.getPassword().isEmpty()) {
+
+        // ✅ 1. Email uniqueness check
+        userRepository.findByEmail(user.getEmail()).ifPresent(existing -> {
+            if (!existing.getId().equals(user.getId())) {
+                throw new RuntimeException("Email already exists");
+            }
+        });
+
+        // ✅ 2. Password handling
+        if (user.getId() != null) {
+            // EDIT USER
+            User dbUser = userRepository.findById(user.getId())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            if (user.getPassword() == null || user.getPassword().isEmpty()) {
+                // 🔒 Keep old password
+                user.setPassword(dbUser.getPassword());
+            } else {
+                // 🔐 Encode new password
+                user.setPassword(passwordEncoder.encode(user.getPassword()));
+            }
+
+        } else {
+            // NEW USER → password must be encoded
             user.setPassword(passwordEncoder.encode(user.getPassword()));
         }
+
+        // ✅ 3. Save user
         userRepository.save(user);
     }
 
     @Override
     public User getUserById(Long id) {
-        return userRepository.findById(id).orElse(null);
+        return userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
     @Override

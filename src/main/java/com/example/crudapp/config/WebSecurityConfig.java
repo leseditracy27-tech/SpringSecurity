@@ -44,8 +44,6 @@ public class WebSecurityConfig {
                 .authenticationProvider(authProvider())
 
                 .authorizeHttpRequests(auth -> auth
-                        // ✅ PUBLIC
-                        .requestMatchers("/login", "/register", "/css/**").permitAll()
 
                         // ✅ ADMIN ONLY
                         .requestMatchers("/admin/**").hasRole("ADMIN")

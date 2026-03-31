@@ -8,7 +8,6 @@ import com.example.crudapp.service.UserService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.BindingResult;
 
 import java.util.HashSet;
@@ -20,19 +19,17 @@ public class AdminController {
 
     private final UserService userService;
     private final RoleRepository roleRepository;
-    private final PasswordEncoder passwordEncoder;
 
-    public AdminController(UserService userService, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
+    public AdminController(UserService userService, RoleRepository roleRepository) {
         this.userService = userService;
         this.roleRepository = roleRepository;
-        this.passwordEncoder = passwordEncoder;
     }
 
     // ✅ List all users
     @GetMapping
     public String listUsers(Model model) {
         model.addAttribute("users", userService.getAllUsers());
-        return "listUsers"; // ✅ IMPORTANT (match folder)
+        return "listUsers";
     }
 
     // ✅ Show add/edit form
@@ -46,16 +43,16 @@ public class AdminController {
         model.addAttribute("user", user);
         model.addAttribute("allRoles", roleRepository.findAll());
 
-        return "user-form"; // ✅ IMPORTANT (match folder)
+        return "user-form";
     }
 
+    // ✅ Save user
     @PostMapping("/save")
     public String saveUser(@Valid @ModelAttribute("user") User user,
                            BindingResult result,
                            @RequestParam(value = "roleIds", required = false) Set<Long> roleIds,
                            Model model) {
 
-        // ✅ Make roleIds safe (never null)
         Set<Long> safeRoleIds = (roleIds != null) ? roleIds : new HashSet<>();
 
         // ✅ Roles validation
@@ -63,7 +60,12 @@ public class AdminController {
             result.rejectValue("roles", "error.user", "At least one role is required");
         }
 
-        // ❌ If validation fails → return form
+        // ✅ Password required ONLY for new users
+        if (user.getId() == null &&
+                (user.getPassword() == null || user.getPassword().isEmpty())) {
+            result.rejectValue("password", "error.user", "Password is required");
+        }
+
         if (result.hasErrors()) {
             model.addAttribute("allRoles", roleRepository.findAll());
             return "user-form";
@@ -71,9 +73,8 @@ public class AdminController {
 
         User existingUser;
 
-        // ✅ EDIT USER
         if (user.getId() != null) {
-
+            // ✅ EDIT
             existingUser = userService.getUserById(user.getId());
 
             existingUser.setFirstName(user.getFirstName());
@@ -81,26 +82,31 @@ public class AdminController {
             existingUser.setEmail(user.getEmail());
             existingUser.setAge(user.getAge());
 
-            // 🔐 Password logic
+            // ✅ Only set password if provided (RAW, NOT encoded)
             if (user.getPassword() != null && !user.getPassword().isEmpty()) {
-                existingUser.setPassword(passwordEncoder.encode(user.getPassword()));
+                existingUser.setPassword(user.getPassword());
             }
 
         } else {
-            // ✅ NEW USER
+            // ✅ NEW USER (RAW password)
             existingUser = user;
-            existingUser.setPassword(passwordEncoder.encode(user.getPassword()));
         }
 
-        // ✅ Use safeRoleIds here
+        // ✅ Assign roles
         Set<Role> roles = new HashSet<>(roleRepository.findAllById(safeRoleIds));
         existingUser.setRoles(roles);
 
-        userService.saveUser(existingUser);
+        // ✅ SAVE (encoding happens in service)
+        try {
+            userService.saveUser(existingUser);
+        } catch (RuntimeException e) {
+            result.rejectValue("email", "error.user", e.getMessage());
+            model.addAttribute("allRoles", roleRepository.findAll());
+            return "user-form";
+        }
 
         return "redirect:/admin";
     }
-
 
     // ✅ Delete user
     @PostMapping("/delete/{id}")

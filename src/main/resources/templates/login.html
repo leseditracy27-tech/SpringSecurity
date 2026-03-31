@@ -1,41 +1,35 @@
-<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<body>
-
-<h2>Login</h2>
-
-<!-- ✅ ERROR MESSAGE -->
-<p th:if="${param.error}" style="color:red;">
-    Invalid email or password
-</p>
-
-<!-- ✅ LOGOUT MESSAGE -->
-<p th:if="${param.logout}" style="color:green;">
-    You have been logged out
-</p>
-
 <form th:action="@{/login}" method="post">
 
     <!-- ✅ CSRF -->
-    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+    <input type="hidden"
+           th:name="${_csrf.parameterName}"
+           th:value="${_csrf.token}"/>
 
-    Email:
-    <input type="text" name="email"/>
+    <!-- Email -->
+    <div class="mb-3">
+        <label>
+            <input type="text"
+                   name="email"
+                   class="form-control form-control-lg"
+                   placeholder="Enter your email"
+                   required>
+        </label>
+    </div>
 
-    <br><br>
+    <!-- Password -->
+    <div class="mb-3">
+        <label>
+            <input type="password"
+                   name="password"
+                   class="form-control form-control-lg"
+                   placeholder="Enter your password"
+                   required>
+        </label>
+    </div>
 
-    Password:
-    <input type="password" name="password"/>
+    <!-- Button -->
+    <button type="submit" class="btn btn-primary w-100 btn-lg">
+        Login
+    </button>
 
-    <br><br>
-
-    <button type="submit">Login</button>
 </form>
-
-<br>
-
-<!-- ✅ ADD THIS (important for testing) -->
-<a href="/register">Register</a>
-
-</body>
-</html>
