@@ -66,6 +66,14 @@ public class AdminController {
             result.rejectValue("password", "error.user", "Password is required");
         }
 
+// ✅ EDIT → ignore password validation if empty
+        if (user.getId() != null &&
+                (user.getPassword() == null || user.getPassword().isEmpty())) {
+
+            result.getFieldErrors()
+                    .removeIf(error -> error.getField().equals("password"));
+        }
+
         if (result.hasErrors()) {
             model.addAttribute("allRoles", roleRepository.findAll());
             return "user-form";

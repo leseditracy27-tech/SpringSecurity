@@ -22,39 +22,38 @@ public class UserServiceImpl implements UserService {
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
-
     @Override
     public void saveUser(User user) {
 
-        // ✅ 1. Email uniqueness check
+        // ✅ Normalize email
+        user.setEmail(user.getEmail().toLowerCase());
+
+        // ✅ Email uniqueness check
         userRepository.findByEmail(user.getEmail()).ifPresent(existing -> {
             if (!existing.getId().equals(user.getId())) {
                 throw new RuntimeException("Email already exists");
             }
         });
 
-        // ✅ 2. Password handling
         if (user.getId() != null) {
-            // EDIT USER
+            // 🔄 EDIT USER
             User dbUser = userRepository.findById(user.getId())
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
             if (user.getPassword() == null || user.getPassword().isEmpty()) {
-                // 🔒 Keep old password
-                user.setPassword(dbUser.getPassword());
+                user.setPassword(dbUser.getPassword()); // keep old
             } else {
-                // 🔐 Encode new password
                 user.setPassword(passwordEncoder.encode(user.getPassword()));
             }
 
         } else {
-            // NEW USER → password must be encoded
+            // 🆕 NEW USER
             user.setPassword(passwordEncoder.encode(user.getPassword()));
         }
 
-        // ✅ 3. Save user
         userRepository.save(user);
     }
+
 
     @Override
     public User getUserById(Long id) {
