@@ -35,14 +35,12 @@ public class AdminController {
     // ✅ Show add/edit form
     @GetMapping("/form")
     public String userForm(@RequestParam(value = "id", required = false) Long id, Model model) {
-
         User user = (id != null)
                 ? userService.getUserById(id)
                 : new User();
 
         model.addAttribute("user", user);
         model.addAttribute("allRoles", roleRepository.findAll());
-
         return "user-form";
     }
 
@@ -53,25 +51,17 @@ public class AdminController {
                            @RequestParam(value = "roleIds", required = false) Set<Long> roleIds,
                            Model model) {
 
-        Set<Long> safeRoleIds = (roleIds != null) ? roleIds : new HashSet<>();
+        // 🔹 Make roles safe (modifiable)
+        Set<Long> safeRoleIds = (roleIds != null) ? new HashSet<>(roleIds) : new HashSet<>();
 
-        // ✅ Roles validation
+        // Roles validation
         if (safeRoleIds.isEmpty()) {
             result.rejectValue("roles", "error.user", "At least one role is required");
         }
 
-        // ✅ Password required ONLY for new users
-        if (user.getId() == null &&
-                (user.getPassword() == null || user.getPassword().isEmpty())) {
+        // Password required only for new users
+        if (user.getId() == null && (user.getPassword() == null || user.getPassword().isEmpty())) {
             result.rejectValue("password", "error.user", "Password is required");
-        }
-
-// ✅ EDIT → ignore password validation if empty
-        if (user.getId() != null &&
-                (user.getPassword() == null || user.getPassword().isEmpty())) {
-
-            result.getFieldErrors()
-                    .removeIf(error -> error.getField().equals("password"));
         }
 
         if (result.hasErrors()) {
@@ -82,7 +72,7 @@ public class AdminController {
         User existingUser;
 
         if (user.getId() != null) {
-            // ✅ EDIT
+            // 🔄 EDIT
             existingUser = userService.getUserById(user.getId());
 
             existingUser.setFirstName(user.getFirstName());
@@ -90,21 +80,21 @@ public class AdminController {
             existingUser.setEmail(user.getEmail());
             existingUser.setAge(user.getAge());
 
-            // ✅ Only set password if provided (RAW, NOT encoded)
+            // Only set new password if provided (raw)
             if (user.getPassword() != null && !user.getPassword().isEmpty()) {
                 existingUser.setPassword(user.getPassword());
             }
 
         } else {
-            // ✅ NEW USER (RAW password)
+            // 🆕 NEW USER
             existingUser = user;
         }
 
-        // ✅ Assign roles
+        // Assign roles
         Set<Role> roles = new HashSet<>(roleRepository.findAllById(safeRoleIds));
         existingUser.setRoles(roles);
 
-        // ✅ SAVE (encoding happens in service)
+        // Save user (service handles password encoding & email uniqueness)
         try {
             userService.saveUser(existingUser);
         } catch (RuntimeException e) {

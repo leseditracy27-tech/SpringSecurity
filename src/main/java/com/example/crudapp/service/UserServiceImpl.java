@@ -50,9 +50,9 @@ public class UserServiceImpl implements UserService {
             // 🆕 NEW USER
             user.setPassword(passwordEncoder.encode(user.getPassword()));
         }
-
-        userRepository.save(user);
+            userRepository.save(user);
     }
+
 
 
     @Override
