@@ -133,7 +133,7 @@
                     th:selected="${user.roles != null} ? ${user.roles.contains(role)} : false">
             </option>
         </select>
-        <div class="error-message"
+        <div class="error-message" 
              th:if="${#fields.hasErrors('roles')}"
              th:errors="*{roles}"></div>
     </div>

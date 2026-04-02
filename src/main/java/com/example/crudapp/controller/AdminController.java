@@ -69,39 +69,11 @@ public class AdminController {
             return "user-form";
         }
 
-        User existingUser;
-
-        if (user.getId() != null) {
-            // 🔄 EDIT
-            existingUser = userService.getUserById(user.getId());
-
-            existingUser.setFirstName(user.getFirstName());
-            existingUser.setLastName(user.getLastName());
-            existingUser.setEmail(user.getEmail());
-            existingUser.setAge(user.getAge());
-
-            // Only set new password if provided (raw)
-            if (user.getPassword() != null && !user.getPassword().isEmpty()) {
-                existingUser.setPassword(user.getPassword());
-            }
-
-        } else {
-            // 🆕 NEW USER
-            existingUser = user;
-        }
-
-        // Assign roles
         Set<Role> roles = new HashSet<>(roleRepository.findAllById(safeRoleIds));
-        existingUser.setRoles(roles);
 
-        // Save user (service handles password encoding & email uniqueness)
-        try {
-            userService.saveUser(existingUser);
-        } catch (RuntimeException e) {
-            result.rejectValue("email", "error.user", e.getMessage());
-            model.addAttribute("allRoles", roleRepository.findAll());
-            return "user-form";
-        }
+        user.setRoles(roles);
+
+        userService.saveUser(user);
 
         return "redirect:/admin";
     }

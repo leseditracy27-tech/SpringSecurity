@@ -46,7 +46,6 @@ public class User implements UserDetails {
 
     // 🔐 PASSWORD (FIXED)
     @Column(name = "password")
-    @Size(min = 4, message = "Password must be at least 4 characters")
     private String password;
 
     // 🔐 ROLES
