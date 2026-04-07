@@ -5,6 +5,7 @@ import com.example.crudapp.model.Role;
 import com.example.crudapp.model.User;
 import com.example.crudapp.repository.RoleRepository;
 import com.example.crudapp.service.UserService;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -25,11 +26,28 @@ public class AdminController {
         this.roleRepository = roleRepository;
     }
 
-    // ✅ List all users
     @GetMapping
-    public String listUsers(Model model) {
-        model.addAttribute("users", userService.getAllUsers());
-        return "listUsers";
+    public String listUsers(Model model,
+                            @RequestParam(defaultValue = "0") int page,
+                            @RequestParam(required = false) String keyword) {
+
+        Page<User> userPage;
+
+        if (keyword != null && !keyword.isEmpty()) {
+            userPage = userService.searchUsersPaginated(keyword, page);
+        } else {
+            userPage = userService.getUsersPaginated(page);
+        }
+
+        model.addAttribute("users", userPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", userPage.getTotalPages());
+        model.addAttribute("keyword", keyword);
+        // ✅ ADD DASHBOARD DATA
+        model.addAttribute("totalUsers", userService.countUsers());
+        model.addAttribute("totalAdmins", userService.countAdmins());
+        model.addAttribute("allRoles", roleRepository.findAll());
+        return "listUsers"; // ✅ KEEP this (your HTML file name)
     }
 
     // ✅ Show add/edit form
@@ -44,22 +62,21 @@ public class AdminController {
         return "user-form";
     }
 
-    // ✅ Save user
     @PostMapping("/save")
     public String saveUser(@Valid @ModelAttribute("user") User user,
                            BindingResult result,
                            @RequestParam(value = "roleIds", required = false) Set<Long> roleIds,
                            Model model) {
 
-        // 🔹 Make roles safe (modifiable)
+        // 🔹 Safe roles
         Set<Long> safeRoleIds = (roleIds != null) ? new HashSet<>(roleIds) : new HashSet<>();
 
-        // Roles validation
+        // ✅ Roles validation
         if (safeRoleIds.isEmpty()) {
             result.rejectValue("roles", "error.user", "At least one role is required");
         }
 
-        // Password required only for new users
+        // ✅ Password validation (only for new user)
         if (user.getId() == null && (user.getPassword() == null || user.getPassword().isEmpty())) {
             result.rejectValue("password", "error.user", "Password is required");
         }
@@ -69,11 +86,22 @@ public class AdminController {
             return "user-form";
         }
 
+        // ✅ Convert roleIds → roles
         Set<Role> roles = new HashSet<>(roleRepository.findAllById(safeRoleIds));
-
         user.setRoles(roles);
 
-        userService.saveUser(user);
+        try {
+            userService.saveUser(user);
+        } catch (RuntimeException e) {
+
+            // 🔥 HANDLE DUPLICATE EMAIL
+            if (e.getMessage().equals("Email already exists")) {
+                result.rejectValue("email", "error.user", "Email already exists");
+            }
+
+            model.addAttribute("allRoles", roleRepository.findAll());
+            return "user-form";
+        }
 
         return "redirect:/admin";
     }

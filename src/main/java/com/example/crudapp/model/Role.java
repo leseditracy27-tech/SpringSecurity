@@ -1,11 +1,14 @@
 package com.example.crudapp.model;
 
 import jakarta.persistence.*;
+import lombok.Getter;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 
 import java.util.Objects;
 
+@Getter
+@Setter // ✅ add this to avoid partial setters later
 @Entity
 @Table(name = "roles")
 public class Role implements GrantedAuthority {
@@ -14,7 +17,7 @@ public class Role implements GrantedAuthority {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Setter
+    @Column(nullable = false, unique = true) // ✅ BEST PRACTICE
     private String name; // ROLE_ADMIN or ROLE_USER
 
     public Role() {}
@@ -23,27 +26,17 @@ public class Role implements GrantedAuthority {
         this.name = name;
     }
 
-    // 🔐 REQUIRED by Spring Security
+    // 🔐 Spring Security uses this
     @Override
     public String getAuthority() {
         return name;
     }
 
-    // ✅ Getters & Setters
-    public Long getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-
+    // ✅ Important for Sets (you are using Set<Role>)
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Role)) return false;
-        Role role = (Role) o;
+        if (!(o instanceof Role role)) return false;
         return id != null && id.equals(role.id);
     }
 

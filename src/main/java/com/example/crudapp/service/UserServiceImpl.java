@@ -2,6 +2,8 @@ package com.example.crudapp.service;
 
 import com.example.crudapp.model.User;
 import com.example.crudapp.repository.UserRepository;
+import org.springframework.data.domain.Page;              // ✅ NEW
+import org.springframework.data.domain.PageRequest;       // ✅ NEW
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +24,7 @@ public class UserServiceImpl implements UserService {
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
+
     @Override
     public void saveUser(User user) {
 
@@ -41,7 +44,7 @@ public class UserServiceImpl implements UserService {
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
             if (user.getPassword() == null || user.getPassword().isEmpty()) {
-                user.setPassword(dbUser.getPassword()); // keep old
+                user.setPassword(dbUser.getPassword()); // keep old password
             } else {
                 user.setPassword(passwordEncoder.encode(user.getPassword()));
             }
@@ -50,10 +53,9 @@ public class UserServiceImpl implements UserService {
             // 🆕 NEW USER
             user.setPassword(passwordEncoder.encode(user.getPassword()));
         }
-            userRepository.save(user);
+
+        userRepository.save(user);
     }
-
-
 
     @Override
     public User getUserById(Long id) {
@@ -64,5 +66,30 @@ public class UserServiceImpl implements UserService {
     @Override
     public void deleteUser(Long id) {
         userRepository.deleteById(id);
+    }
+
+    // ✅ PAGINATION
+    @Override
+    public Page<User> getUsersPaginated(int page) {
+        return userRepository.findAll(PageRequest.of(page, 5));
+    }
+
+    // ✅ SEARCH + PAGINATION
+    @Override
+    public Page<User> searchUsersPaginated(String keyword, int page) {
+        return userRepository
+                .findByFirstNameContainingIgnoreCaseOrEmailContainingIgnoreCase(
+                        keyword, keyword, PageRequest.of(page, 5)
+                );
+    }
+
+    @Override
+    public long countUsers() {
+        return userRepository.count();
+    }
+
+    @Override
+    public long countAdmins() {
+        return userRepository.countByRoles_Name("ROLE_ADMIN");
     }
 }
