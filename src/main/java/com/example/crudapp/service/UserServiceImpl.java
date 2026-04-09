@@ -2,10 +2,10 @@ package com.example.crudapp.service;
 
 import com.example.crudapp.model.User;
 import com.example.crudapp.repository.UserRepository;
-import org.springframework.data.domain.Page;              // ✅ NEW
-import org.springframework.data.domain.PageRequest;       // ✅ NEW
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 
@@ -15,7 +15,8 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository userRepository,
+                           PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }
@@ -28,12 +29,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public void saveUser(User user) {
 
-        // ✅ Normalize email
+        // ✅ normalize email
         user.setEmail(user.getEmail().toLowerCase());
 
-        // ✅ Email uniqueness check
+        // ✅ check duplicate email
         userRepository.findByEmail(user.getEmail()).ifPresent(existing -> {
-            if (!existing.getId().equals(user.getId())) {
+            if (user.getId() == null || !existing.getId().equals(user.getId())) {
                 throw new RuntimeException("Email already exists");
             }
         });
@@ -46,7 +47,7 @@ public class UserServiceImpl implements UserService {
             if (user.getPassword() == null || user.getPassword().isEmpty()) {
                 user.setPassword(dbUser.getPassword()); // keep old password
             } else {
-                user.setPassword(passwordEncoder.encode(user.getPassword()));
+                user.setPassword(passwordEncoder.encode(user.getPassword())); // encode new
             }
 
         } else {
@@ -68,17 +69,15 @@ public class UserServiceImpl implements UserService {
         userRepository.deleteById(id);
     }
 
-    // ✅ PAGINATION
     @Override
     public Page<User> getUsersPaginated(int page) {
         return userRepository.findAll(PageRequest.of(page, 5));
     }
 
-    // ✅ SEARCH + PAGINATION
     @Override
     public Page<User> searchUsersPaginated(String keyword, int page) {
         return userRepository
-                .findByFirstNameContainingIgnoreCaseOrEmailContainingIgnoreCase(
+                .findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(
                         keyword, keyword, PageRequest.of(page, 5)
                 );
     }
@@ -90,6 +89,16 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public long countAdmins() {
-        return userRepository.countByRoles_Name("ROLE_ADMIN");
+        return userRepository.findAll().stream()
+                .filter(u -> u.getRoles().stream()
+                        .anyMatch(r -> r.getName().equals("ROLE_ADMIN")))
+                .count();
+    }
+
+    // ✅ FINAL ADDITION (REQUIRED FOR USER PAGE)
+    @Override
+    public User findByEmail(String email) {
+        return userRepository.findByEmail(email.toLowerCase())
+                .orElseThrow(() -> new RuntimeException("User not found"));
     }
 }

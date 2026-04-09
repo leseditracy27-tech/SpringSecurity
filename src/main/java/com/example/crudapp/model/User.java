@@ -4,14 +4,15 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.List;
 
 @Getter
 @Setter
@@ -24,31 +25,25 @@ public class User implements UserDetails {
     private Long id;
 
     @Column(name="first_name")
-    @NotBlank(message = "First name is required")
-    @Pattern(regexp = "^[A-Za-z]+$", message = "First name must contain only letters")
+    @NotBlank
     private String firstName;
 
     @Column(name="last_name")
-    @NotBlank(message = "Last name is required")
-    @Pattern(regexp = "^[A-Za-z]+$", message = "Last name must contain only letters")
+    @NotBlank
     private String lastName;
 
     @Column(name="email", unique = true)
-    @NotBlank(message = "Email is required")
-    @Email(message = "Enter a valid email")
+    @NotBlank
+    @Email
     private String email;
 
     @Column(name="age")
-    @NotNull(message = "Age is required")
-    @Min(value = 1, message = "Age must be between 1 and 120")
-    @Max(value = 120, message = "Age must be between 1 and 120")
+    @NotNull
     private Integer age;
 
-    // 🔐 PASSWORD (FIXED)
     @Column(name = "password")
     private String password;
 
-    // 🔐 ROLES
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "users_roles",
@@ -58,7 +53,6 @@ public class User implements UserDetails {
     private Set<Role> roles = new HashSet<>();
 
     public User() {}
-
     public User(String firstName, String lastName, String email, Integer age, String password) {
         this.firstName = firstName;
         this.lastName = lastName;
@@ -67,37 +61,21 @@ public class User implements UserDetails {
         this.password = password;
     }
 
-    // ===== SPRING SECURITY =====
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return roles.stream()
-                .map(role -> new SimpleGrantedAuthority(role.getName()))
+                .map(r -> new SimpleGrantedAuthority(r.getName()))
                 .collect(Collectors.toSet());
     }
 
     @Override
-    public String getUsername() {
-        return email; // login uses email
-    }
+    public String getUsername() { return email; }
+    @Override public boolean isAccountNonExpired() { return true; }
+    @Override public boolean isAccountNonLocked() { return true; }
+    @Override public boolean isCredentialsNonExpired() { return true; }
+    @Override public boolean isEnabled() { return true; }
 
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return true;
+    public List<String> getSimpleRoles() {
+        return roles.stream().map(r -> r.getName().replace("ROLE_", "")).toList();
     }
 }

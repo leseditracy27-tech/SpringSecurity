@@ -43,11 +43,13 @@ public class AdminController {
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", userPage.getTotalPages());
         model.addAttribute("keyword", keyword);
-        // ✅ ADD DASHBOARD DATA
+
+        // ✅ Dashboard data
         model.addAttribute("totalUsers", userService.countUsers());
         model.addAttribute("totalAdmins", userService.countAdmins());
         model.addAttribute("allRoles", roleRepository.findAll());
-        return "listUsers"; // ✅ KEEP this (your HTML file name)
+
+        return "listUsers";
     }
 
     // ✅ Show add/edit form
@@ -62,21 +64,21 @@ public class AdminController {
         return "user-form";
     }
 
+    // ✅ Save user (new or edit)
     @PostMapping("/save")
-    public String saveUser(@Valid @ModelAttribute("user") User user,
+    public String saveUser(@Valid User user,
                            BindingResult result,
                            @RequestParam(value = "roleIds", required = false) Set<Long> roleIds,
                            Model model) {
 
-        // 🔹 Safe roles
         Set<Long> safeRoleIds = (roleIds != null) ? new HashSet<>(roleIds) : new HashSet<>();
 
-        // ✅ Roles validation
+        // Roles validation
         if (safeRoleIds.isEmpty()) {
             result.rejectValue("roles", "error.user", "At least one role is required");
         }
 
-        // ✅ Password validation (only for new user)
+        // Password validation only for new user
         if (user.getId() == null && (user.getPassword() == null || user.getPassword().isEmpty())) {
             result.rejectValue("password", "error.user", "Password is required");
         }
@@ -86,19 +88,17 @@ public class AdminController {
             return "user-form";
         }
 
-        // ✅ Convert roleIds → roles
+        // Convert roleIds → Role entities
         Set<Role> roles = new HashSet<>(roleRepository.findAllById(safeRoleIds));
         user.setRoles(roles);
 
         try {
             userService.saveUser(user);
         } catch (RuntimeException e) {
-
-            // 🔥 HANDLE DUPLICATE EMAIL
+            // Handle duplicate email
             if (e.getMessage().equals("Email already exists")) {
                 result.rejectValue("email", "error.user", "Email already exists");
             }
-
             model.addAttribute("allRoles", roleRepository.findAll());
             return "user-form";
         }

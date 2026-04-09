@@ -15,13 +15,14 @@ public interface UserService {
 
     void deleteUser(Long id);
 
-    // ✅ Pagination
+    // Pagination
     Page<User> getUsersPaginated(int page);
 
-    // ✅ Search + Pagination
+    // Search + Pagination
     Page<User> searchUsersPaginated(String keyword, int page);
 
     long countUsers();
 
     long countAdmins();
+    User findByEmail(String email);
 }

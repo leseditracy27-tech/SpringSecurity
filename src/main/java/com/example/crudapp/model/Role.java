@@ -8,7 +8,7 @@ import org.springframework.security.core.GrantedAuthority;
 import java.util.Objects;
 
 @Getter
-@Setter // ✅ add this to avoid partial setters later
+@Setter
 @Entity
 @Table(name = "roles")
 public class Role implements GrantedAuthority {
@@ -17,22 +17,20 @@ public class Role implements GrantedAuthority {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true) // ✅ BEST PRACTICE
+    @Column(nullable = false, unique = true)
     private String name; // ROLE_ADMIN or ROLE_USER
 
-    public Role() {}
+    public Role() {} // default constructor
 
-    public Role(String name) {
+    public Role(String name) { // useful constructor
         this.name = name;
     }
 
-    // 🔐 Spring Security uses this
     @Override
     public String getAuthority() {
         return name;
     }
 
-    // ✅ Important for Sets (you are using Set<Role>)
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

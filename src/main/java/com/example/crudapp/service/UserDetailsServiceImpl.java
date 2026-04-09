@@ -1,8 +1,10 @@
 package com.example.crudapp.service;
 
-
+import com.example.crudapp.model.User;
 import com.example.crudapp.repository.UserRepository;
-import org.springframework.security.core.userdetails.*;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -17,8 +19,17 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
 
-        // ✅ Return your actual User (which already implements UserDetails)
-        return userRepository.findByEmail(email)
+        email = email.toLowerCase(); // 🔥 IMPORTANT FIX
+
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        return new org.springframework.security.core.userdetails.User(
+                user.getEmail(),
+                user.getPassword(),
+                user.getRoles().stream()
+                        .map(role -> new org.springframework.security.core.authority.SimpleGrantedAuthority(role.getName()))
+                        .toList()
+        );
     }
 }

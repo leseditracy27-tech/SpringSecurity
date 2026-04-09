@@ -20,28 +20,14 @@ public class TestDataInitializer {
                                PasswordEncoder passwordEncoder) {
         return args -> {
 
-            // ✅ Create roles if not exist
             Role adminRole = roleRepository.findAll()
-                    .stream()
-                    .filter(r -> r.getAuthority().equals("ROLE_ADMIN"))
-                    .findFirst()
-                    .orElseGet(() -> {
-                        Role r = new Role();
-                        r.setName("ROLE_ADMIN");
-                        return roleRepository.save(r);
-                    });
+                    .stream().filter(r -> r.getName().equals("ROLE_ADMIN"))
+                    .findFirst().orElseGet(() -> roleRepository.save(new Role("ROLE_ADMIN")));
 
             Role userRole = roleRepository.findAll()
-                    .stream()
-                    .filter(r -> r.getAuthority().equals("ROLE_USER"))
-                    .findFirst()
-                    .orElseGet(() -> {
-                        Role r = new Role();
-                        r.setName("ROLE_USER");
-                        return roleRepository.save(r);
-                    });
+                    .stream().filter(r -> r.getName().equals("ROLE_USER"))
+                    .findFirst().orElseGet(() -> roleRepository.save(new Role("ROLE_USER")));
 
-            // ✅ Create ADMIN user
             if (userRepository.findByEmail("admin@mail.com").isEmpty()) {
                 User admin = new User();
                 admin.setFirstName("Admin");
@@ -50,21 +36,7 @@ public class TestDataInitializer {
                 admin.setAge(30);
                 admin.setPassword(passwordEncoder.encode("admin"));
                 admin.setRoles(Set.of(adminRole));
-
                 userRepository.save(admin);
-            }
-
-            // ✅ Create NORMAL USER
-            if (userRepository.findByEmail("user@mail.com").isEmpty()) {
-                User user = new User();
-                user.setFirstName("Normal");
-                user.setLastName("User");
-                user.setEmail("user@mail.com");
-                user.setAge(25);
-                user.setPassword(passwordEncoder.encode("user"));
-                user.setRoles(Set.of(userRole));
-
-                userRepository.save(user);
             }
         };
     }
