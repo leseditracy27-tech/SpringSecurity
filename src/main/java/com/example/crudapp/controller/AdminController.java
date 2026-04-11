@@ -26,6 +26,7 @@ public class AdminController {
         this.roleRepository = roleRepository;
     }
 
+    // ✅ LIST USERS
     @GetMapping
     public String listUsers(Model model,
                             @RequestParam(defaultValue = "0") int page,
@@ -44,7 +45,6 @@ public class AdminController {
         model.addAttribute("totalPages", userPage.getTotalPages());
         model.addAttribute("keyword", keyword);
 
-        // ✅ Dashboard data
         model.addAttribute("totalUsers", userService.countUsers());
         model.addAttribute("totalAdmins", userService.countAdmins());
         model.addAttribute("allRoles", roleRepository.findAll());
@@ -52,7 +52,7 @@ public class AdminController {
         return "listUsers";
     }
 
-    // ✅ Show add/edit form
+    // ✅ SHOW FORM
     @GetMapping("/form")
     public String userForm(@RequestParam(value = "id", required = false) Long id, Model model) {
         User user = (id != null)
@@ -64,7 +64,7 @@ public class AdminController {
         return "user-form";
     }
 
-    // ✅ Save user (new or edit)
+    // ✅ SAVE USER
     @PostMapping("/save")
     public String saveUser(@Valid User user,
                            BindingResult result,
@@ -73,12 +73,10 @@ public class AdminController {
 
         Set<Long> safeRoleIds = (roleIds != null) ? new HashSet<>(roleIds) : new HashSet<>();
 
-        // Roles validation
         if (safeRoleIds.isEmpty()) {
             result.rejectValue("roles", "error.user", "At least one role is required");
         }
 
-        // Password validation only for new user
         if (user.getId() == null && (user.getPassword() == null || user.getPassword().isEmpty())) {
             result.rejectValue("password", "error.user", "Password is required");
         }
@@ -88,14 +86,12 @@ public class AdminController {
             return "user-form";
         }
 
-        // Convert roleIds → Role entities
         Set<Role> roles = new HashSet<>(roleRepository.findAllById(safeRoleIds));
         user.setRoles(roles);
 
         try {
             userService.saveUser(user);
         } catch (RuntimeException e) {
-            // Handle duplicate email
             if (e.getMessage().equals("Email already exists")) {
                 result.rejectValue("email", "error.user", "Email already exists");
             }
@@ -106,9 +102,9 @@ public class AdminController {
         return "redirect:/admin";
     }
 
-    // ✅ Delete user
-    @PostMapping("/delete/{id}")
-    public String deleteUser(@PathVariable Long id) {
+    // ✅ DELETE USER (FINAL FIXED)
+    @PostMapping("/delete")
+    public String deleteUser(@RequestParam("id") Long id) {
         userService.deleteUser(id);
         return "redirect:/admin";
     }
