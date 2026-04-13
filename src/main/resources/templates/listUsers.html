@@ -225,7 +225,7 @@
             const options = document.getElementById('editRoles').options;
 
             for (let i = 0; i < options.length; i++) {
-                options[i].selected = selectedRoles.includes(options[i].text);
+                options[i].selected = selectedRoles.includes(options[i].value);
             }
         });
 

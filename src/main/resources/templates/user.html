@@ -23,10 +23,10 @@
         <div class="col-2 bg-white border-end vh-100 pt-3">
             <ul class="nav flex-column">
                 <li class="nav-item">
-                    <a class="nav-link active bg-primary text-white rounded">Admin</a>
+                    <a class="nav-link text-primary" th:href="@{/admin}">Admin</a>
                 </li>
                 <li class="nav-item mt-2">
-                    <a class="nav-link text-primary" th:href="@{/user}">User</a>
+                    <a class="nav-link active bg-primary text-white rounded">User</a>
                 </li>
             </ul>
         </div>
@@ -41,7 +41,7 @@
                 </div>
 
                 <div class="card-body">
-                    <table class="table table-striped text-center">
+                    <table class="table table-striped text-center align-middle">
                         <thead class="table-light">
                         <tr>
                             <th>ID</th>
@@ -55,7 +55,12 @@
 
                         <tbody>
                         <tr>
-                            <td colspan="6" th:text="${username}"></td>
+                            <td th:text="${user.id}"></td>
+                            <td th:text="${user.firstName}"></td>
+                            <td th:text="${user.lastName}"></td>
+                            <td th:text="${user.age}"></td>
+                            <td th:text="${user.email}"></td>
+                            <td th:text="${user.simpleRoles}"></td>
                         </tr>
                         </tbody>
                     </table>
