@@ -28,6 +28,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void saveUser(User user) {
+        System.out.println("SERVICE SAVE CALLED: " + user.getEmail());
 
         // ✅ normalize email
         user.setEmail(user.getEmail().toLowerCase());
@@ -71,14 +72,15 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Page<User> getUsersPaginated(int page) {
-        return userRepository.findAll(PageRequest.of(page, 5));
+        return userRepository.findAll(PageRequest.of(page, 100));
     }
 
     @Override
     public Page<User> searchUsersPaginated(String keyword, int page) {
         return userRepository
                 .findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(
-                        keyword, keyword, PageRequest.of(page, 5)
+                        keyword, keyword,
+                        PageRequest.of(page, 5)
                 );
     }
 

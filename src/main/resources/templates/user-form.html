@@ -62,40 +62,55 @@
                         <div class="row justify-content-center">
                             <div class="col-md-5">
 
+                                <!-- FIRST NAME -->
                                 <label class="fw-bold">First Name</label>
-                                <input type="text" th:field="*{firstName}" class="form-control mb-3">
+                                <input type="text" th:field="*{firstName}" class="form-control mb-1">
+                                <div class="text-danger mb-2"
+                                     th:if="${#fields.hasErrors('firstName')}"
+                                     th:errors="*{firstName}"></div>
 
+                                <!-- LAST NAME -->
                                 <label class="fw-bold">Last Name</label>
-                                <input type="text" th:field="*{lastName}" class="form-control mb-3">
+                                <input type="text" th:field="*{lastName}" class="form-control mb-1">
+                                <div class="text-danger mb-2"
+                                     th:if="${#fields.hasErrors('lastName')}"
+                                     th:errors="*{lastName}"></div>
 
+                                <!-- AGE -->
                                 <label class="fw-bold">Age</label>
-                                <input type="number" th:field="*{age}" class="form-control mb-3">
+                                <input type="number" th:field="*{age}" class="form-control mb-1">
+                                <div class="text-danger mb-2"
+                                     th:if="${#fields.hasErrors('age')}"
+                                     th:errors="*{age}"></div>
 
+                                <!-- EMAIL -->
                                 <label class="fw-bold">Email</label>
-                                <input type="email" th:field="*{email}" class="form-control mb-3">
-
-                                <div class="text-danger"
+                                <input type="email" th:field="*{email}" class="form-control mb-1">
+                                <div class="text-danger mb-2"
                                      th:if="${#fields.hasErrors('email')}"
-                                     th:errors="*{email}">
-                                </div>
+                                     th:errors="*{email}"></div>
 
+                                <!-- PASSWORD -->
                                 <label class="fw-bold">Password</label>
-                                <input type="password" th:field="*{password}" class="form-control mb-3">
+                                <input type="password" th:field="*{password}" class="form-control mb-1">
+                                <div class="text-danger mb-2"
+                                     th:if="${#fields.hasErrors('password')}"
+                                     th:errors="*{password}"></div>
 
+                                <!-- ROLES -->
                                 <label class="fw-bold">Roles</label>
-                                <select name="roleIds" class="form-select mb-3" multiple>
+                                <select name="roleIds" class="form-select mb-1" multiple>
                                     <option th:each="r : ${allRoles}"
                                             th:value="${r.id}"
                                             th:text="${r.name.replace('ROLE_', '')}">
                                     </option>
                                 </select>
 
-                                <div class="text-danger"
+                                <div class="text-danger mb-2"
                                      th:if="${#fields.hasErrors('roles')}"
-                                     th:errors="*{roles}">
-                                </div>
+                                     th:errors="*{roles}"></div>
 
-                                <button type="submit" class="btn btn-success w-100">
+                                <button type="submit" class="btn btn-success w-100 mt-3">
                                     Add New User
                                 </button>
 
