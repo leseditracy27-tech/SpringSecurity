@@ -86,13 +86,6 @@ public class AdminController {
             result.rejectValue("password", "error.user", "Password is required");
         }
 
-        // ❌ VALIDATION FAILED → RETURN SAME PAGE (IMPORTANT)
-        if (result.hasErrors()) {
-            model.addAttribute("users", userService.getUsersPaginated(0).getContent());
-            model.addAttribute("allRoles", roleRepository.findAll());
-            model.addAttribute("user", user);
-            return "listUsers"; // 🔥 FIXED
-        }
 
         // ✅ Set roles
         Set<Role> roles = new HashSet<>(roleRepository.findAllById(safeRoleIds));
@@ -113,7 +106,7 @@ public class AdminController {
             model.addAttribute("allRoles", roleRepository.findAll());
             model.addAttribute("user", user);
 
-            return "listUsers"; // 🔥 FIXED
+            return "user-form"; // 🔥 FIXED
         }
 
         return "redirect:/admin";
