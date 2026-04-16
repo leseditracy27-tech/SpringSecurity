@@ -91,4 +91,10 @@ public class User implements UserDetails {
                 .map(r -> r.getName().replace("ROLE_", ""))
                 .toList();
     }
+    // 🔥 ADD THIS RIGHT BELOW
+    public String getRoleIds() {
+        return roles.stream()
+                .map(role -> role.getId().toString())
+                .collect(Collectors.joining(","));
+    }
 }

@@ -1,5 +1,6 @@
 package com.example.crudapp.controller;
 
+import com.fasterxml.jackson.annotation.JacksonInject;
 import jakarta.validation.Valid;
 import com.example.crudapp.model.Role;
 import com.example.crudapp.model.User;
@@ -67,7 +68,6 @@ public class AdminController {
         return "user-form";
     }
 
-    // ✅ SAVE USER (FULLY FIXED)
     @PostMapping("/save")
     public String saveUser(@Valid @ModelAttribute("user") User user,
                            BindingResult result,
@@ -77,41 +77,76 @@ public class AdminController {
         Set<Long> safeRoleIds = (roleIds != null) ? new HashSet<>(roleIds) : new HashSet<>();
 
         // ✅ Roles validation
-        if (safeRoleIds.isEmpty()) {
+        if (user.getId() == null && (roleIds == null || roleIds.isEmpty())) {
             result.rejectValue("roles", "error.user", "At least one role is required");
         }
 
-        // ✅ Password validation (only for NEW user)
+        // ✅ Password validation (ONLY for new user)
         if (user.getId() == null && (user.getPassword() == null || user.getPassword().isEmpty())) {
             result.rejectValue("password", "error.user", "Password is required");
         }
 
+        // 🔥 HANDLE VALIDATION ERRORS (THIS WAS MISSING)
+        if (result.hasErrors()) {
+
+            // 👉 EDIT USER (stay on modal)
+            if (user.getId() != null) {
+                model.addAttribute("users", userService.getUsersPaginated(0).getContent());
+                model.addAttribute("allRoles", roleRepository.findAll());
+                model.addAttribute("user", user);
+                model.addAttribute("showEditModal", true);
+
+                return "listUsers";
+            }
+
+            // 👉 NEW USER (go back to form)
+            model.addAttribute("allRoles", roleRepository.findAll());
+            return "user-form";
+        }
 
         // ✅ Set roles
-        Set<Role> roles = new HashSet<>(roleRepository.findAllById(safeRoleIds));
-        user.setRoles(roles);
-        System.out.println("SAVING USER: " + user.getEmail());
 
+        Set<Role> roles;
+
+        if (user.getId() != null && (roleIds == null || roleIds.isEmpty())) {
+            // ✅ EDIT → keep existing roles
+            User existingUser = userService.getUserById(user.getId());
+            roles = existingUser.getRoles();
+        } else {
+            // ✅ NEW or roles selected
+            roles = new HashSet<>(roleRepository.findAllById(roleIds));
+        }
+
+        user.setRoles(roles);
+
+        System.out.println("SAVING USER: " + user.getEmail());
 
         try {
             userService.saveUser(user);
+
         } catch (RuntimeException e) {
 
-            // ✅ Email already exists
             if ("Email already exists".equals(e.getMessage())) {
                 result.rejectValue("email", "error.user", "Email already exists");
             }
 
-            model.addAttribute("users", userService.getUsersPaginated(0).getContent());
-            model.addAttribute("allRoles", roleRepository.findAll());
-            model.addAttribute("user", user);
+            // 👉 EDIT USER ERROR
+            if (user.getId() != null) {
+                model.addAttribute("users", userService.getUsersPaginated(0).getContent());
+                model.addAttribute("allRoles", roleRepository.findAll());
+                model.addAttribute("user", user);
+                model.addAttribute("showEditModal", true);
 
-            return "user-form"; // 🔥 FIXED
+                return "listUsers";
+            }
+
+            // 👉 NEW USER ERROR
+            model.addAttribute("allRoles", roleRepository.findAll());
+            return "user-form";
         }
 
         return "redirect:/admin";
     }
-
     // ✅ DELETE USER
     @PostMapping("/delete")
     public String deleteUser(@RequestParam("id") Long id) {
