@@ -1,19 +1,16 @@
 package com.example.crudapp.controller;
 
-import com.fasterxml.jackson.annotation.JacksonInject;
-import jakarta.validation.Valid;
-import com.example.crudapp.model.Role;
+import com.example.crudapp.dto.UserCreateDto;
+import com.example.crudapp.dto.UserEditDto;
 import com.example.crudapp.model.User;
 import com.example.crudapp.repository.RoleRepository;
 import com.example.crudapp.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.validation.BindingResult;
-
-import java.util.HashSet;
-import java.util.Set;
+import org.springframework.web.bind.annotation.*;
 
 @Controller
 @RequestMapping("/admin")
@@ -27,7 +24,6 @@ public class AdminController {
         this.roleRepository = roleRepository;
     }
 
-    // ✅ LIST USERS (FIXED)
     @GetMapping
     public String listUsers(Model model,
                             @RequestParam(defaultValue = "0") int page,
@@ -50,107 +46,80 @@ public class AdminController {
         model.addAttribute("totalAdmins", userService.countAdmins());
         model.addAttribute("allRoles", roleRepository.findAll());
 
-        // 🔥 IMPORTANT FIX
-        model.addAttribute("user", new User());
+        model.addAttribute("user", new UserCreateDto());
+        model.addAttribute("editUser", new UserEditDto());
 
         return "listUsers";
     }
 
-    // ✅ SHOW FORM (optional page, still works)
     @GetMapping("/form")
-    public String userForm(@RequestParam(value = "id", required = false) Long id, Model model) {
-        User user = (id != null)
-                ? userService.getUserById(id)
-                : new User();
-
-        model.addAttribute("user", user);
+    public String userForm(Model model) {
+        model.addAttribute("user", new UserCreateDto());
         model.addAttribute("allRoles", roleRepository.findAll());
         return "user-form";
     }
 
-    @PostMapping("/save")
-    public String saveUser(@Valid @ModelAttribute("user") User user,
-                           BindingResult result,
-                           @RequestParam(value = "roleIds", required = false) Set<Long> roleIds,
-                           Model model) {
+    @PostMapping("/create")
+    public String createUser(@Valid @ModelAttribute("user") UserCreateDto userDto,
+                             BindingResult result,
+                             Model model) {
 
-        Set<Long> safeRoleIds = (roleIds != null) ? new HashSet<>(roleIds) : new HashSet<>();
-
-        // ✅ Roles validation
-        if (user.getId() == null && (roleIds == null || roleIds.isEmpty())) {
-            result.rejectValue("roles", "error.user", "At least one role is required");
-        }
-
-        // ✅ Password validation (ONLY for new user)
-        if (user.getId() == null && (user.getPassword() == null || user.getPassword().isEmpty())) {
-            result.rejectValue("password", "error.user", "Password is required");
-        }
-
-        // 🔥 HANDLE VALIDATION ERRORS (THIS WAS MISSING)
         if (result.hasErrors()) {
-
-            // 👉 EDIT USER (stay on modal)
-            if (user.getId() != null) {
-                model.addAttribute("users", userService.getUsersPaginated(0).getContent());
-                model.addAttribute("allRoles", roleRepository.findAll());
-                model.addAttribute("user", user);
-                model.addAttribute("showEditModal", true);
-
-                return "listUsers";
-            }
-
-            // 👉 NEW USER (go back to form)
             model.addAttribute("allRoles", roleRepository.findAll());
             return "user-form";
         }
 
-        // ✅ Set roles
-
-        Set<Role> roles;
-
-        if (user.getId() != null && (roleIds == null || roleIds.isEmpty())) {
-            // ✅ EDIT → keep existing roles
-            User existingUser = userService.getUserById(user.getId());
-            roles = existingUser.getRoles();
-        } else {
-            // ✅ NEW or roles selected
-            roles = new HashSet<>(roleRepository.findAllById(roleIds));
-        }
-
-        user.setRoles(roles);
-
-        System.out.println("SAVING USER: " + user.getEmail());
-
         try {
-            userService.saveUser(user);
-
+            userService.saveNewUser(userDto);
         } catch (RuntimeException e) {
-
             if ("Email already exists".equals(e.getMessage())) {
                 result.rejectValue("email", "error.user", "Email already exists");
             }
-
-            // 👉 EDIT USER ERROR
-            if (user.getId() != null) {
-                model.addAttribute("users", userService.getUsersPaginated(0).getContent());
-                model.addAttribute("allRoles", roleRepository.findAll());
-                model.addAttribute("user", user);
-                model.addAttribute("showEditModal", true);
-
-                return "listUsers";
-            }
-
-            // 👉 NEW USER ERROR
             model.addAttribute("allRoles", roleRepository.findAll());
             return "user-form";
         }
 
         return "redirect:/admin";
     }
-    // ✅ DELETE USER
+
+    @PostMapping("/update")
+    public String updateUser(@Valid @ModelAttribute("editUser") UserEditDto userDto,
+                             BindingResult result,
+                             Model model) {
+
+        if (result.hasErrors()) {
+            model.addAttribute("users", userService.getUsersPaginated(0).getContent());
+            model.addAttribute("allRoles", roleRepository.findAll());
+            model.addAttribute("user", new UserCreateDto());
+            model.addAttribute("editUser", userDto);
+            model.addAttribute("showEditModal", true);
+            return "listUsers";
+        }
+
+        try {
+            userService.updateUser(userDto);
+        } catch (RuntimeException e) {
+            if ("Email already exists".equals(e.getMessage())) {
+                result.rejectValue("email", "error.user", "Email already exists");
+            }
+
+            model.addAttribute("users", userService.getUsersPaginated(0).getContent());
+            model.addAttribute("allRoles", roleRepository.findAll());
+            model.addAttribute("user", new UserCreateDto());
+            model.addAttribute("editUser", userDto);
+            model.addAttribute("showEditModal", true);
+
+            return "listUsers";
+        }
+
+        return "redirect:/admin";
+    }
+
     @PostMapping("/delete")
     public String deleteUser(@RequestParam("id") Long id) {
         userService.deleteUser(id);
         return "redirect:/admin";
     }
 }
+
+

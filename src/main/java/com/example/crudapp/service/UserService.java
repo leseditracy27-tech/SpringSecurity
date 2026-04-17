@@ -1,5 +1,7 @@
 package com.example.crudapp.service;
 
+import com.example.crudapp.dto.UserCreateDto;
+import com.example.crudapp.dto.UserEditDto;
 import com.example.crudapp.model.User;
 import org.springframework.data.domain.Page;
 
@@ -10,6 +12,11 @@ public interface UserService {
     List<User> getAllUsers();
 
     void saveUser(User user);
+    void saveNewUser(UserCreateDto dto);
+
+    void updateUser(UserEditDto dto);
+
+
 
     User getUserById(Long id);
 
