@@ -2,21 +2,21 @@ package com.example.crudapp.service;
 
 import com.example.crudapp.dto.UserCreateDto;
 import com.example.crudapp.dto.UserEditDto;
+import com.example.crudapp.dto.UserResponseDto;
+import com.example.crudapp.exception.BadRequestException;
+import com.example.crudapp.exception.ResourceNotFoundException;
 import com.example.crudapp.model.Role;
 import com.example.crudapp.model.User;
 import com.example.crudapp.repository.RoleRepository;
 import com.example.crudapp.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-
-
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -26,11 +26,16 @@ public class UserServiceImpl implements UserService {
     private final RoleRepository roleRepository;
 
     public UserServiceImpl(UserRepository userRepository,
-                           PasswordEncoder passwordEncoder, RoleRepository roleRepository) {
+                           PasswordEncoder passwordEncoder,
+                           RoleRepository roleRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.roleRepository = roleRepository;
     }
+
+    // =========================
+    // BASIC USERS
+    // =========================
 
     @Override
     public List<User> getAllUsers() {
@@ -38,44 +43,23 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void saveUser(User user) {
-        System.out.println("SERVICE SAVE CALLED: " + user.getEmail());
-
-        // ✅ normalize email
-        user.setEmail(user.getEmail().toLowerCase());
-
-        // ✅ check duplicate email
-        userRepository.findByEmail(user.getEmail()).ifPresent(existing -> {
-            if (user.getId() == null || !existing.getId().equals(user.getId())) {
-                throw new RuntimeException("Email already exists");
-            }
-        });
-
-        if (user.getId() != null) {
-            // 🔄 EDIT USER
-            User dbUser = userRepository.findById(user.getId())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-
-            if (user.getPassword() == null || user.getPassword().isEmpty()) {
-                user.setPassword(dbUser.getPassword()); // keep old password
-            } else {
-                user.setPassword(passwordEncoder.encode(user.getPassword())); // encode new
-            }
-
-        } else {
-            // 🆕 NEW USER
-            user.setPassword(passwordEncoder.encode(user.getPassword()));
-        }
-
-        userRepository.save(user);
+    public User getUserById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("User not found with id " + id));
     }
 
+    // =========================
+    // CREATE USER
+    // =========================
+
     @Override
-    public void saveNewUser(UserCreateDto dto) {
+    public User saveNewUser(UserCreateDto dto) {
+
         String email = dto.getEmail().toLowerCase();
 
         userRepository.findByEmail(email).ifPresent(existing -> {
-            throw new RuntimeException("Email already exists");
+            throw new BadRequestException("Email already exists");
         });
 
         User user = new User();
@@ -85,66 +69,103 @@ public class UserServiceImpl implements UserService {
         user.setAge(dto.getAge());
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
 
-        Set<Role> roles = new HashSet<>(roleRepository.findAllById(dto.getRoleIds()));
+        // ✅ Default role = ROLE_USER only
+        Set<Role> roles;
+
+        if (dto.getRoleIds() == null || dto.getRoleIds().isEmpty()) {
+            Role userRole = roleRepository.findByName("ROLE_USER")
+                    .orElseThrow(() ->
+                            new RuntimeException("Default role ROLE_USER not found"));
+
+            roles = Set.of(userRole);
+        } else {
+            roles = new HashSet<>(roleRepository.findAllById(dto.getRoleIds()));
+
+            if (roles.size() != dto.getRoleIds().size()) {
+                throw new BadRequestException("Invalid role IDs provided");
+            }
+        }
+
         user.setRoles(roles);
 
-        userRepository.save(user);
+        return userRepository.save(user);
     }
 
+    // =========================
+    // UPDATE USER
+    // =========================
+
     @Override
-    public void updateUser(UserEditDto dto) {
-        User existingUser = userRepository.findById(dto.getId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    public User updateUser(Long id, UserEditDto dto) {
+
+        User user = userRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("User not found with id " + id));
 
         String email = dto.getEmail().toLowerCase();
 
-        userRepository.findByEmail(email).ifPresent(user -> {
-            if (!user.getId().equals(dto.getId())) {
-                throw new RuntimeException("Email already exists");
+        userRepository.findByEmail(email).ifPresent(existing -> {
+            if (!existing.getId().equals(id)) {
+                throw new BadRequestException("Email already exists");
             }
         });
 
-        existingUser.setFirstName(dto.getFirstName());
-        existingUser.setLastName(dto.getLastName());
-        existingUser.setEmail(email);
-        existingUser.setAge(dto.getAge());
+        user.setFirstName(dto.getFirstName());
+        user.setLastName(dto.getLastName());
+        user.setEmail(email);
+        user.setAge(dto.getAge());
 
+        // ✅ Validate roles
         Set<Role> roles = new HashSet<>(roleRepository.findAllById(dto.getRoleIds()));
-        existingUser.setRoles(roles);
 
-        if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
-            existingUser.setPassword(passwordEncoder.encode(dto.getPassword()));
+        if (roles.size() != dto.getRoleIds().size()) {
+            throw new BadRequestException("Invalid role IDs provided");
         }
 
-        userRepository.save(existingUser);
+        user.setRoles(roles);
+
+        // ✅ Update password only if provided
+        if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
+            user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        }
+
+        return userRepository.save(user);
     }
 
-
-
-    @Override
-    public User getUserById(Long id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-    }
+    // =========================
+    // DELETE USER
+    // =========================
 
     @Override
     public void deleteUser(Long id) {
-        userRepository.deleteById(id);
+
+        User user = userRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("User not found with id " + id));
+
+        userRepository.delete(user);
     }
+
+    // =========================
+    // PAGINATION
+    // =========================
 
     @Override
     public Page<User> getUsersPaginated(int page) {
-        return userRepository.findAll(PageRequest.of(page, 100));
+        return userRepository.findAll(PageRequest.of(page, 10));
     }
 
     @Override
     public Page<User> searchUsersPaginated(String keyword, int page) {
         return userRepository
                 .findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(
-                        keyword, keyword,
-                        PageRequest.of(page, 5)
+                        keyword, keyword, PageRequest.of(page, 10)
                 );
     }
+
+    // =========================
+    // STATS
+    // =========================
 
     @Override
     public long countUsers() {
@@ -153,16 +174,22 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public long countAdmins() {
-        return userRepository.findAll().stream()
-                .filter(u -> u.getRoles().stream()
-                        .anyMatch(r -> r.getName().equals("ROLE_ADMIN")))
-                .count();
+        return userRepository.countByRoles_Name("ROLE_ADMIN");
     }
 
-    // ✅ FINAL ADDITION (REQUIRED FOR USER PAGE)
+    // =========================
+    // AUTH SUPPORT
+    // =========================
+
     @Override
     public User findByEmail(String email) {
         return userRepository.findByEmail(email.toLowerCase())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("User not found with email " + email));
+    }
+
+    @Override
+    public UserResponseDto mapToDto(User user) {
+        return null;
     }
 }

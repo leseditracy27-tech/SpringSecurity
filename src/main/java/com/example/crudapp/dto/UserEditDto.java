@@ -27,10 +27,10 @@ public class UserEditDto {
     @Max(value = 120, message = "Maximum age is 120")
     private Integer age;
 
-
+    // ✅ IMPORTANT FIX: allow null password on edit
     private String password;
 
-    @NotEmpty(message = "At least one role is required")
+    // ❗ IMPORTANT FIX: avoid validation crash when JS sends empty array
     private Set<Long> roleIds = new HashSet<>();
 
     public Long getId() {
@@ -46,7 +46,7 @@ public class UserEditDto {
     }
 
     public void setFirstName(String firstName) {
-        this.firstName = firstName;
+        this.firstName = firstName != null ? firstName.trim() : null;
     }
 
     public String getLastName() {
@@ -54,7 +54,7 @@ public class UserEditDto {
     }
 
     public void setLastName(String lastName) {
-        this.lastName = lastName;
+        this.lastName = lastName != null ? lastName.trim() : null;
     }
 
     public String getEmail() {
@@ -62,7 +62,7 @@ public class UserEditDto {
     }
 
     public void setEmail(String email) {
-        this.email = email;
+        this.email = email != null ? email.trim() : null;
     }
 
     public Integer getAge() {
@@ -78,7 +78,8 @@ public class UserEditDto {
     }
 
     public void setPassword(String password) {
-        this.password = password;
+        // allow blank password on edit (DO NOT force validation)
+        this.password = (password == null || password.isBlank()) ? null : password;
     }
 
     public Set<Long> getRoleIds() {
@@ -86,7 +87,6 @@ public class UserEditDto {
     }
 
     public void setRoleIds(Set<Long> roleIds) {
-        this.roleIds = roleIds;
+        this.roleIds = (roleIds != null) ? roleIds : new HashSet<>();
     }
 }
-

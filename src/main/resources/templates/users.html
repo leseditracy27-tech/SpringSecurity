@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>User Panel</title>
@@ -12,50 +12,50 @@
 
 <!-- 🔹 NAVBAR -->
 <nav class="navbar navbar-dark bg-dark px-3">
-    <span class="text-white">
-        <b th:text="${#authentication.name}"></b>
-        with roles:
-        <span th:text="${#authentication.authorities}"></span>
-    </span>
+    <span class="text-white">User Management Panel</span>
 </nav>
 
 <div class="container-fluid">
     <div class="row">
 
         <!-- 🔹 SIDEBAR -->
-        <div class="col-2 bg-white border-end vh-100 pt-3">
+        <div class="col-2 bg-light border-end vh-100 pt-3">
             <ul class="nav flex-column">
                 <li class="nav-item">
-                    <a class="nav-link" th:href="@{/admin}">Admin</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link active bg-primary text-white rounded">User</a>
+                    <a class="nav-link active bg-primary text-white rounded" href="#">Users</a>
                 </li>
             </ul>
         </div>
 
-        <!-- 🔹 MAIN -->
+        <!-- 🔹 MAIN CONTENT -->
         <div class="col-10 p-4">
 
-            <h2>User information-page</h2>
+            <h2>User List</h2>
 
-            <!-- TAB -->
-            <ul class="nav nav-tabs mt-3">
-                <li class="nav-item">
-                    <a class="nav-link active">User</a>
-                </li>
-            </ul>
+            <!-- 🔍 SEARCH -->
+            <div class="mb-3">
+                <input type="text" id="searchInput"
+                       class="form-control"
+                       placeholder="Search users...">
+            </div>
 
-            <!-- ✅ TABLE (REPLACED SECTION) -->
-            <div class="card mt-3">
+            <!-- ➕ ADD USER BUTTON (PLACE HERE) -->
+            <button class="btn btn-success mb-3"
+                    data-bs-toggle="modal"
+                    data-bs-target="#userModal">
+                + Add User
+            </button>
+
+            <!-- ➕ TABLE -->
+            <div class="card">
                 <div class="card-header">
-                    <b>About User</b>
+                    <b>Users</b>
                 </div>
 
                 <div class="card-body">
 
-                    <table class="table table-striped">
-                        <thead>
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
                         <tr>
                             <th>ID</th>
                             <th>First Name</th>
@@ -63,24 +63,13 @@
                             <th>Age</th>
                             <th>Email</th>
                             <th>Roles</th>
+                            <th>Actions</th>
                         </tr>
                         </thead>
 
-                        <tbody>
-                        <tr>
-                            <td th:text="${user.id}"></td>
-                            <td th:text="${user.firstName}"></td>
-                            <td th:text="${user.lastName}"></td>
-                            <td th:text="${user.age}"></td>
-                            <td th:text="${user.email}"></td>
-                            <td>
-                                <span th:each="r : ${user.roles}"
-                                      th:text="${r.name.replace('ROLE_', '') + ' '}">
-                                </span>
-                            </td>
-                        </tr>
+                        <tbody id="userTableBody">
+                        <!-- JS fills this -->
                         </tbody>
-
                     </table>
 
                 </div>
@@ -90,8 +79,139 @@
     </div>
 </div>
 
-<!-- Bootstrap JS -->
+<!-- 🔥 MODAL (PLACE HERE, BEFORE SCRIPT) -->
+
+<div class="modal fade" id="userModal" tabindex="-1">
+<div class="modal-dialog">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Create User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <input type="text" id="firstName" class="form-control mb-2" placeholder="First Name">
+                <input type="text" id="lastName" class="form-control mb-2" placeholder="Last Name">
+                <input type="email" id="email" class="form-control mb-2" placeholder="Email">
+                <input type="number" id="age" class="form-control mb-2" placeholder="Age">
+
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="createUser()">Save</button>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<!-- 🔥 BOOTSTRAP JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- 🔥 JAVASCRIPT -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        loadUsers();
+
+        document.getElementById("searchInput").addEventListener("input", function () {
+            loadUsers(this.value);
+        });
+    });
+
+    // 🔹 LOAD USERS
+    function loadUsers(keyword = "") {
+
+        let url = "/api/users?page=0";
+
+        if (keyword && keyword.trim() !== "") {
+            url += "&keyword=" + keyword;
+        }
+
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+
+                const table = document.getElementById("userTableBody");
+                table.innerHTML = "";
+
+                data.content.forEach(user => {
+
+                    const roles = Array.isArray(user.roles) ? user.roles.join(", ") : "";
+                    const row = `
+                    <tr>
+                        <td>${user.id}</td>
+                        <td>${user.firstName}</td>
+                        <td>${user.lastName}</td>
+                        <td>${user.age}</td>
+                        <td>${user.email}</td>
+                        <td>${roles}</td>
+                        <td>
+                            <button class="btn btn-danger btn-sm"
+                                    onclick="deleteUser(${user.id})">
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                `;
+
+                    table.innerHTML += row;
+                });
+            })
+            .catch(err => console.log("Error loading users:", err));
+    }
+
+    // 🔹 CREATE USER
+    function createUser() {
+
+        const user = {
+            firstName: document.getElementById("firstName").value,
+            lastName: document.getElementById("lastName").value,
+            email: document.getElementById("email").value,
+            age: document.getElementById("age").value
+        };
+
+        fetch("/api/users", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(user)
+        })
+            .then(res => res.json())
+            .then(data => {
+
+                // close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById("userModal"));
+                modal.hide();
+
+                // clear form
+                document.getElementById("firstName").value = "";
+                document.getElementById("lastName").value = "";
+                document.getElementById("email").value = "";
+                document.getElementById("age").value = "";
+
+                // refresh table
+                loadUsers();
+            })
+            .catch(err => console.log("Create error:", err));
+    }
+
+    // 🔹 DELETE USER
+    function deleteUser(id) {
+
+        if (!confirm("Are you sure?")) return;
+
+        fetch("/api/users/" + id, {
+            method: "DELETE"
+        })
+            .then(() => loadUsers())
+            .catch(err => console.log("Delete error:", err));
+    }
+</script>
 
 </body>
 </html>
